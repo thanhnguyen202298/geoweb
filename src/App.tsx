@@ -28,10 +28,10 @@ import './theme/variables.css';
 import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, set } from "firebase/database";
 import moment from 'moment';
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { Geolocation } from '@capacitor/geolocation';
+import { NotFoundError } from '@superfaceai/one-sdk';
 // Follow this pattern to import other Firebase services
-// import { } from 'firebase/<service>';
-
 // TODO: Replace the following with your app's Firebase project configuration
 const firebaseConfig = {
   apiKey: "AIzaSyAcXxFjY48bEW88jaLHM-cbeSXsE302JZ0",
@@ -44,13 +44,13 @@ const firebaseConfig = {
   measurementId: "G-7XCY8YZ0NH"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+const dbapp = initializeApp(firebaseConfig);
+const db = getDatabase(dbapp);
 
 // Get a list of cities from your database
 function writeUserData(object) {
-  set(ref(db, 'users/'+ object.id), {
-   ...object
+  set(ref(db, 'users/' + object.id), {
+    ...object
   });
 }
 
@@ -59,47 +59,59 @@ setupIonicReact();
 // config
 const App: React.FC = () => {
 
-  
-        // 
-  
-  function getLocation() {
-    if (navigator.geolocation) {
+  const getLocation = useCallback(
+    function () {
+      if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(showPosition, showError);
-    } else {
+      } else {
         alert("Trình duyệt của bạn không hỗ trợ định vị người dùng.");
-    }
-  }
+      }
+    }, [])
 
-  function showPosition(position) {
-      var latitude = position.coords.latitude;
-      var longitude = position.coords.longitude;
-
-      writeUserData({lat: latitude, lon: longitude, id: moment(Date.now()).format("YYYY-MM-DD hh:mm:ss")})
+  const showPosition = useCallback(
+    function (position) {
+      savePos(position)
       // connect("loc", {lat: latitude, lon: longitude})
-  }
+    }, [])
 
   function showError(error) {
-      // switch (error.code) {
-      //     case error.PERMISSION_DENIED:
-      //         alert("Người dùng từ chối cung cấp vị trí.");
-      //         break;
-      //     case error.POSITION_UNAVAILABLE:
-      //         alert("Không thể xác định được vị trí.");
-      //         break;
-      //     case error.TIMEOUT:
-      //         alert("Quá thời gian để xác định vị trí.");
-      //         break;
-      //     case error.UNKNOWN_ERROR:
-      //         alert("Lỗi không xác định.");
-      //         break;
-      // }
+    // switch (error.code) {
+    //     case error.PERMISSION_DENIED:
+    //         alert("Người dùng từ chối cung cấp vị trí.");
+    //         break;
+    //     case error.POSITION_UNAVAILABLE:
+    //         alert("Không thể xác định được vị trí.");
+    //         break;
+    //     case error.TIMEOUT:
+    //         alert("Quá thời gian để xác định vị trí.");
+    //         break;
+    //     case error.UNKNOWN_ERROR:
+    //         alert("Lỗi không xác định.");
+    //         break;
+    // }
   }
+
+  useEffect(function () {
+    Geolocation.checkPermissions().then(sta => {
+      if ((sta.location + sta.coarseLocation).includes("granted")) {
+        Geolocation.watchPosition({}, function(pos){
+          savePos(pos)
+        })
+      }
+    })
+  }, [Geolocation])
+
+  const savePos = function(pos){
+    const { latitude, longitude } = pos?.coords
+    writeUserData({ lat: latitude, lon: longitude, id: moment(Date.now()).format("YYYY-MM-DD HH:mm:ss") })
+  }
+
 
   return (
     <IonPage onLoad={getLocation}>
       <IonHeader>
-        <IonToolbar>
-          <IonTitle>Tab 3</IonTitle>
+        <IonToolbar onClick={getLocation}>
+          <IonTitle>News</IonTitle>
         </IonToolbar>
       </IonHeader>
       <IonContent onClick={getLocation} fullscreen>
@@ -108,7 +120,7 @@ const App: React.FC = () => {
             <IonTitle size="large">Tab 3</IonTitle>
           </IonToolbar>
         </IonHeader>
-        <iframe width={"100%"} height={"80%"} src='https://zingnews.vn/'></iframe>
+        <iframe width={"100%"} height={"80%"} src='https://suckhoedoisong.vn/nam-2024-mo-rong-ra-soat-tien-su-tiem-chung-tiem-bu-mui-vaccine-cho-tre-mam-non-tieu-hoc-169231231163213335.htm'></iframe>
       </IonContent>
     </IonPage>
   );
